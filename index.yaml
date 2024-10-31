@@ -1,0 +1,14 @@
+apiVersion: v1
+entries:
+  blocky:
+  - apiVersion: v2
+    appVersion: "0.24"
+    created: "2024-10-31T01:06:02.715668295Z"
+    description: A Helm chart for deploying a Blocky instance
+    digest: abae5856878f15bc93fc363b6fbd39f4f4e76278cb86e8d21d4f21df8b275348
+    name: blocky
+    type: application
+    urls:
+    - https://github.com/KriegerHomeServer/helm-charts-development/releases/download/blocky-0.0.1/blocky-0.0.1.tgz
+    version: 0.0.1
+generated: "2024-10-31T01:06:02.715674566Z"
