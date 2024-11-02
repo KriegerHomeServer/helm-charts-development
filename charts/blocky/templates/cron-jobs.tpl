@@ -5,7 +5,7 @@ metadata:
   name: update-blocky-dns-mappings-job
   namespace: {{ .Release.Namespace }}
 spec:
-  schedule: "*/5 * * * *"
+  schedule: {{ .Values.cronjob.schedule | default "*/5 * * * *" }}
   jobTemplate:
     spec:
       template:
@@ -13,7 +13,9 @@ spec:
           serviceAccountName: blocky-cronjob-sa
           containers:
           - name: dns-mapping-job
-            image: teegank/alpine-kubectl:latest
+            image: {{ .Values.cronjob.image.repository | default "teegank/kubernetes-utils" }}:{{ .Values.cronjob.image.tag | default "latest" }}
+            imagePullPolicy: {{ .Values.cronjob.image.pullPolicy | default "IfNotPresent" }}
+            restartPolicy: Never
             command:
             - /bin/bash
             - -c
@@ -39,6 +41,4 @@ spec:
               kubectl patch configmap/blocky-configuration -n {{ .Release.Namespace }} --type='json' -p "[{ \"op\": \"replace\", \"path\": \"/data/config.yml\", \"value\": \"${NEW_CONFIG}\" }]";
               
               kubectl rollout restart deployment/blocky -n {{ .Release.Namespace }};
-
-          restartPolicy: Never
 {{- end -}}

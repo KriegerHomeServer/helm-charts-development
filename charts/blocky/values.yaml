@@ -6,15 +6,16 @@ config:
     - 8.8.4.4
 cronjob:
   image:
-    repository: "spx01/blocky"
-    tag: "latest"
     pullPolicy: "IfNotPresent"
+    repository: "teegank/kubernetes-utils"
+    tag: "latest"
+  schedule: "*/5 * * * *"
 deployment:
   httpPort: 4000
   image:
+    pullPolicy: "IfNotPresent"
     repository: "spx01/blocky"
     tag: "latest"
-    pullPolicy: "IfNotPresent"
   replicaCount: 1
   resources:
     limits:

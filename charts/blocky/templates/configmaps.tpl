@@ -18,7 +18,7 @@ data:
         default:
           - ads
     ports:
-      http: {{ .Values.deployment.httpPort }}
+      http: {{ .Values.deployment.httpPort | default 4000 }}
       dns: 53
     customDNS:
       customTTL: 1h
