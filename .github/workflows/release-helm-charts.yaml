@@ -63,25 +63,25 @@ jobs:
         run: |
           helm package ${{ matrix.dir }} -d ./releases
 
-      - name: Create tag
-        if: ${{ github.ref_name == 'main' }}
-        uses: actions/github-script@v5
-        with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ env.NAME }}-${{ env.VERSION }}',
-              sha: context.sha
-            }).catch(err => {
-              if (err.status !== 422) throw err;
-              github.rest.git.updateRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: 'tags/${{ env.NAME }}-${{ env.VERSION }}',
-                sha: context.sha
-              });
-            })
+      # - name: Create tag
+      #   if: ${{ github.ref_name == 'main' }}
+      #   uses: actions/github-script@v5
+      #   with:
+      #     script: |
+      #       github.rest.git.createRef({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         ref: 'refs/tags/${{ env.NAME }}-${{ env.VERSION }}',
+      #         sha: context.sha
+      #       }).catch(err => {
+      #         if (err.status !== 422) throw err;
+      #         github.rest.git.updateRef({
+      #           owner: context.repo.owner,
+      #           repo: context.repo.repo,
+      #           ref: 'tags/${{ env.NAME }}-${{ env.VERSION }}',
+      #           sha: context.sha
+      #         });
+      #       })
 
       - name: Release
         if: ${{ github.ref_name == 'main' }}
@@ -91,7 +91,7 @@ jobs:
           body: ${{ env.DESCRIPTION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           make_latest: true
-          tag: ${{ env.NAME }}-${{ env.VERSION }}
+          tag_name: ${{ env.NAME }}-${{ env.VERSION }}
           files: |
             releases/*.tgz
 
@@ -100,25 +100,25 @@ jobs:
         run: |
           helm package ${{ matrix.dir }} -d ./releases --version "dev"
 
-      - name: Create tag
-        if: ${{ github.ref_name == 'development' }}
-        uses: actions/github-script@v5
-        with:
-          script: |
-            github.rest.git.createRef({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              ref: 'refs/tags/${{ env.NAME }}-dev',
-              sha: context.sha
-            }).catch(err => {
-              if (err.status !== 422) throw err;
-              github.rest.git.updateRef({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                ref: 'tags/${{ env.NAME }}-dev',
-                sha: context.sha
-              });
-            })
+      # - name: Create tag
+      #   if: ${{ github.ref_name == 'development' }}
+      #   uses: actions/github-script@v5
+      #   with:
+      #     script: |
+      #       github.rest.git.createRef({
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         ref: 'refs/tags/${{ env.NAME }}-dev',
+      #         sha: context.sha
+      #       }).catch(err => {
+      #         if (err.status !== 422) throw err;
+      #         github.rest.git.updateRef({
+      #           owner: context.repo.owner,
+      #           repo: context.repo.repo,
+      #           ref: 'tags/${{ env.NAME }}-dev',
+      #           sha: context.sha
+      #         });
+      #       })
 
       - name: Release
         if: ${{ github.ref_name == 'development' }}
@@ -128,7 +128,7 @@ jobs:
           body: ${{ env.DESCRIPTION }}
           token: ${{ secrets.GITHUB_TOKEN }}
           prerelease: true
-          tag: ${{ env.NAME }}-dev
+          tag_name: ${{ env.NAME }}-dev
           files: |
             releases/*.tgz
 
