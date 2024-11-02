@@ -51,22 +51,29 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Package Helm Charts
-        if: ${{ github.ref_name == 'main' }}
-        run: |
-          helm package ${{ matrix.dir }} -d ./releases
-
-      - name: Package Helm Charts
-        if: ${{ github.ref_name == 'development' }}
-        run: |
-          helm package ${{ matrix.dir }} -d ./releases --version "dev"
-
       - name: Set ENV values from Chart.yaml
         uses: dcarbone/yaml-to-env-action@v1.0.0
         with:
           debug: false
           yaml-file: '${{ matrix.dir }}/Chart.yaml'
           yq-version: '4.27.5'
+
+      - name: Package Helm Charts
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          helm package ${{ matrix.dir }} -d ./releases
+
+      - name: Create tag
+        if: ${{ github.ref_name == 'main' }}
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ env.NAME }}-${{ env.VERSION }}',
+              sha: context.sha
+            })
 
       - name: Release
         if: ${{ github.ref_name == 'main' }}
@@ -79,6 +86,23 @@ jobs:
           tag: ${{ env.NAME }}-${{ env.VERSION }}
           files: |
             releases/*.tgz
+
+      - name: Package Helm Charts
+        if: ${{ github.ref_name == 'development' }}
+        run: |
+          helm package ${{ matrix.dir }} -d ./releases --version "dev"
+
+      - name: Create tag
+        if: ${{ github.ref_name == 'development' }}
+        uses: actions/github-script@v5
+        with:
+          script: |
+            github.rest.git.createRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: 'refs/tags/${{ env.NAME }}-dev',
+              sha: context.sha
+            })
 
       - name: Release
         if: ${{ github.ref_name == 'development' }}
