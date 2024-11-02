@@ -21,4 +21,15 @@ entries:
     urls:
     - https://github.com/KriegerHomeServer/helm-charts-development/releases/download/blocky-0.0.1/blocky-0.0.1.tgz
     version: 0.0.1
-generated: "2024-11-02T03:19:44.763668831Z"
+  blocky-dns:
+  - apiVersion: v2
+    appVersion: "0.24"
+    created: "2024-11-02T03:22:03.109255668Z"
+    description: A Helm chart for deploying the Blocky DNS
+    digest: 09d47b0e55f6e56bb7a58fcd5c5fa72e392e2ba78073124449577666981fe4af
+    name: blocky-dns
+    type: application
+    urls:
+    - https://github.com/KriegerHomeServer/helm-charts-development/releases/download/blocky-dns-1.0.0/blocky-dns-1.0.0.tgz
+    version: 1.0.0
+generated: "2024-11-02T03:22:03.109264094Z"
