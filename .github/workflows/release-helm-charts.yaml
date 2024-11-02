@@ -138,6 +138,7 @@ jobs:
         with:
           fetch-depth: 0
           ref: releases
+          clean: false
 
       - name: Move Packaged Helm Charts
         run: |
