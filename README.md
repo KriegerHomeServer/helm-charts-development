@@ -6,6 +6,6 @@ This repository contains release versions of Helm charts used in my home server.
 
 ### Images
 
-|   Name    | Description | Latest Version |
-| :-------: | :---------: | :------------: |
-| `example` |   Example   |    `1.0.0`     |
+|     Name     |                     Description                     | Latest Version |
+| :----------: | :-------------------------------------------------: | :------------: |
+| `blocky-dns` | Helm chart for deploying the Blocky DNS application |    `1.0.0`     |

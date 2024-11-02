@@ -1,0 +1,20 @@
+---
+{{ include "helm-charts.blocky.custom-resource-definitions" . }}
+---
+{{ include "helm-charts.blocky.cluster-roles" . }}
+---
+{{ include "helm-charts.blocky.roles" . }}
+---
+{{ include "helm-charts.blocky.service-accounts" . }}
+---
+{{ include "helm-charts.blocky.cluster-role-bindings" . }}
+---
+{{ include "helm-charts.blocky.role-bindings" . }}
+---
+{{ include "helm-charts.blocky.configmaps" . }}
+---
+{{ include "helm-charts.blocky.deployments" . }}
+---
+{{ include "helm-charts.blocky.services" . }}
+---
+{{ include "helm-charts.blocky.cron-jobs" . }}

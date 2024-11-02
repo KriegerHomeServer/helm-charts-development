@@ -1,0 +1,28 @@
+config:
+  blockLists:
+    - https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
+  upstreamDnsServers:
+    - 8.8.8.8
+    - 8.8.4.4
+cronjob:
+  image:
+    repository: "spx01/blocky"
+    tag: "latest"
+    pullPolicy: "IfNotPresent"
+deployment:
+  httpPort: 4000
+  image:
+    repository: "spx01/blocky"
+    tag: "latest"
+    pullPolicy: "IfNotPresent"
+  replicaCount: 1
+  resources:
+    limits:
+      cpu: 100m
+      memory: 128Mi
+    requests:
+      cpu: 50m
+      memory: 64Mi
+service:
+  loadBalancerIP: ""
+  type: LoadBalancer
