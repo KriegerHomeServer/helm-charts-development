@@ -6,10 +6,35 @@ on:
       - main
 
 jobs:
-  release-helm-charts:
+  discover-charts:
+    runs-on: ubuntu-latest
+    outputs:
+      discovered_charts: ${{ steps.discover-directories.outputs.discovered_directories }}
+      discovered_charts_count: ${{ steps.discover-directories.outputs.discovered_directories_count }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Discover directories
+        id: discover-directories
+        run: |
+          discovered_directories=$( printf '{ "dir":['; find . -maxdepth 2 -type d -regex './charts/.*' -printf '"%P", ' | sed 's/, $//'; printf '] }' );
+          discovered_directories_count=$( find . -maxdepth 2 -type d -regex './charts/.*' | wc -l );
+          
+          echo "discovered_directories=${discovered_directories}" >> "$GITHUB_OUTPUT";
+          echo "discovered_directories_count=${discovered_directories_count}" >> "$GITHUB_OUTPUT";
+
+  package-helm-charts:
     permissions:
       contents: write
     runs-on: ubuntu-latest
+    needs:
+      - discover-charts
+    if: ${{ needs.discover-charts.outputs.discovered_charts_count > 0 }}
+    strategy:
+      matrix: ${{ fromJson( needs.discover-charts.outputs.discovered_charts ) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -26,10 +51,42 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Package Helm Charts
+        if: ${{ github.ref_name == 'main' }}
+        run: |
+          helm package ${{ matrix.dir }} -d ./releases
+
+      - name: Package Helm Charts
+        if: ${{ github.ref_name == 'development' }}
+        run: |
+          helm package ${{ matrix.dir }} -d ./releases --version "dev"
+
+      - name: Set ENV values from Chart.yaml
+        uses: dcarbone/yaml-to-env-action@v1.0.0
         with:
-          pages_branch: releases
-          skip_existing: true
+          debug: false
+          yaml-file: '${{ matrix.dir }}/Chart.yaml'
+          yq-version: '4.27.5'
+
+      - name: Release
+        if: ${{ github.ref_name == 'main' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.NAME }}-${{ env.VERSION }}
+          draft: true
+          body: ${{ env.DESCRIPTION }}
+          files: |
+            releases/*.tgz
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Release
+        if: ${{ github.ref_name == 'development' }}
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ${{ env.NAME }}-dev
+          draft: true
+          prerelease: true
+          body: ${{ env.DESCRIPTION }}
+          files: |
+            releases/*.tgz
+          token: ${{ secrets.GITHUB_TOKEN }}
