@@ -34,6 +34,7 @@ jobs:
       - discover-charts
     if: ${{ needs.discover-charts.outputs.discovered_charts_count > 0 }}
     strategy:
+      max-parallel: 1
       matrix: ${{ fromJson( needs.discover-charts.outputs.discovered_charts ) }}
     steps:
       - name: Checkout code
@@ -132,6 +133,23 @@ jobs:
           files: |
             releases/*.tgz
 
+      - name: Checkout Releases Branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: releases
+
+      - name: Move Packaged Helm Charts
+        run: |
+          mkdir -p packages;
+          mv releases/*.tgz packages/;
+
+      - name: Commit and Push Packaged Helm Charts
+        run: |
+          git add packages;
+          git commit -m "Add ${{ env.NAME }}-${{ env.VERSION }}";
+          git push;
+
   rebuild-index:
     permissions:
       contents: write
@@ -165,4 +183,4 @@ jobs:
         env:
           CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
         run: |
-          cr index -r ${{ github.repository }} -o ${{ github.repository_owner }} --pages-branch releases
+          cr index -r ${{ github.repository }} -o ${{ github.repository_owner }} --pages-branch releases --package-path packages --push
