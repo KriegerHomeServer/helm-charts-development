@@ -6,182 +6,258 @@ on:
       - main
 
 jobs:
-  discover-charts:
+  package-and-publish-helm-charts:
     runs-on: ubuntu-latest
-    outputs:
-      discovered_charts: ${{ steps.discover-directories.outputs.discovered_directories }}
-      discovered_charts_count: ${{ steps.discover-directories.outputs.discovered_directories_count }}
+    permissions:
+      contents: write
     steps:
-      - name: Checkout code
+      - name: Checkout Current Branch
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Discover directories
-        id: discover-directories
-        run: |
-          discovered_directories=$( printf '{ "dir":['; find . -maxdepth 2 -type d -regex './charts/.*' -printf '"%P", ' | sed 's/, $//'; printf '] }' );
-          discovered_directories_count=$( find . -maxdepth 2 -type d -regex './charts/.*' | wc -l );
+      - name: Package and Publish Helm Charts
+        users: KriegerHomeServer/custom-helm-publish
+        with:
+          main_branch: main
+          charts_dir: charts
+          build_dir: builds
+          pages_branch: releases
+          packages_dir: packages
+          branch_tag_rules: "main:^.*$,development:^.*-dev$"
+
+
+  # package-helm-charts:
+  #   runs-on: ubuntu-latest
+  #   permissions:
+  #     contents: write
+  #   steps:
+  #     - name: Install Helm
+  #       uses: azure/setup-helm@v4
+  #       env:
+  #         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+
+  #     - name: Install Chart Releaser
+  #       run: |
+  #         wget https://github.com/helm/chart-releaser/releases/download/v1.6.0/chart-releaser_1.6.0_linux_amd64.tar.gz;
+  #         tar xfz chart-releaser_1.6.0_linux_amd64.tar.gz cr;
+  #         sudo mv cr /usr/local/bin/;
+
+  #     - name: Checkout 'main' Branch
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Configure Git
+  #       run: |
+  #         git config user.name "$GITHUB_ACTOR"
+  #         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+      
+  #     - name: Package Helm Charts
+  #       run: |
+
+  #         cat << 'EOF' > ./package_helm_charts.sh
+  #         #!/bin/bash
+
+  #         CHART_DIR=${1};
+
+  #         CHART_VERSION=` helm show chart ${CHART_DIR} | grep version | sed 's/version: //' `; 
+
+  #         GIT_BRANCH=` git rev-parse --abbrev-ref HEAD `; 
+
+  #         if [[ ${GIT_BRANCH} == "main" && ${CHART_VERSION} != *"-dev" ]]; then 
+  #             echo "Chart version does not end with -dev, skipping packaging"; 
+  #             return 0; 
+  #         fi 
+
+  #         helm package ${CHART_DIR} -d ./releases;
+  #         EOF
+
+  #         find . -maxdepth 2 -type d -regex './charts/.*' -exec ./package_helm_charts.sh {} \;
+
+
+
+
+
+    
+
+  # discover-charts:
+  #   runs-on: ubuntu-latest
+  #   outputs:
+  #     discovered_charts: ${{ steps.discover-directories.outputs.discovered_directories }}
+  #     discovered_charts_count: ${{ steps.discover-directories.outputs.discovered_directories_count }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+
+  #     - name: Discover directories
+  #       id: discover-directories
+  #       run: |
+  #         discovered_directories=$( printf '{ "dir":['; find . -maxdepth 2 -type d -regex './charts/.*' -printf '"%P", ' | sed 's/, $//'; printf '] }' );
+  #         discovered_directories_count=$( find . -maxdepth 2 -type d -regex './charts/.*' | wc -l );
           
-          echo "discovered_directories=${discovered_directories}" >> "$GITHUB_OUTPUT";
-          echo "discovered_directories_count=${discovered_directories_count}" >> "$GITHUB_OUTPUT";
+  #         echo "discovered_directories=${discovered_directories}" >> "$GITHUB_OUTPUT";
+  #         echo "discovered_directories_count=${discovered_directories_count}" >> "$GITHUB_OUTPUT";
 
-  package-helm-charts:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    needs:
-      - discover-charts
-    if: ${{ needs.discover-charts.outputs.discovered_charts_count > 0 }}
-    strategy:
-      max-parallel: 1
-      matrix: ${{ fromJson( needs.discover-charts.outputs.discovered_charts ) }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+  # package-helm-charts:
+  #   permissions:
+  #     contents: write
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - discover-charts
+  #   if: ${{ needs.discover-charts.outputs.discovered_charts_count > 0 }}
+  #   strategy:
+  #     max-parallel: 1
+  #     matrix: ${{ fromJson( needs.discover-charts.outputs.discovered_charts ) }}
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+  #     - name: Configure Git
+  #       run: |
+  #         git config user.name "$GITHUB_ACTOR"
+  #         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Install Helm
-        uses: azure/setup-helm@v4
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  #     - name: Install Helm
+  #       uses: azure/setup-helm@v4
+  #       env:
+  #         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Set ENV values from Chart.yaml
-        uses: dcarbone/yaml-to-env-action@v1.0.0
-        with:
-          debug: false
-          yaml-file: '${{ matrix.dir }}/Chart.yaml'
-          yq-version: '4.27.5'
+  #     - name: Set ENV values from Chart.yaml
+  #       uses: dcarbone/yaml-to-env-action@v1.0.0
+  #       with:
+  #         debug: false
+  #         yaml-file: '${{ matrix.dir }}/Chart.yaml'
+  #         yq-version: '4.27.5'
 
-      - name: Package Helm Charts
-        if: ${{ github.ref_name == 'main' }}
-        run: |
-          helm package ${{ matrix.dir }} -d ./releases
+  #     - name: Package Helm Charts
+  #       if: ${{ github.ref_name == 'main' }}
+  #       run: |
+  #         helm package ${{ matrix.dir }} -d ./releases
 
-      # - name: Create tag
-      #   if: ${{ github.ref_name == 'main' }}
-      #   uses: actions/github-script@v5
-      #   with:
-      #     script: |
-      #       github.rest.git.createRef({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         ref: 'refs/tags/${{ env.NAME }}-${{ env.VERSION }}',
-      #         sha: context.sha
-      #       }).catch(err => {
-      #         if (err.status !== 422) throw err;
-      #         github.rest.git.updateRef({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           ref: 'tags/${{ env.NAME }}-${{ env.VERSION }}',
-      #           sha: context.sha
-      #         });
-      #       })
+  #     # - name: Create tag
+  #     #   if: ${{ github.ref_name == 'main' }}
+  #     #   uses: actions/github-script@v5
+  #     #   with:
+  #     #     script: |
+  #     #       github.rest.git.createRef({
+  #     #         owner: context.repo.owner,
+  #     #         repo: context.repo.repo,
+  #     #         ref: 'refs/tags/${{ env.NAME }}-${{ env.VERSION }}',
+  #     #         sha: context.sha
+  #     #       }).catch(err => {
+  #     #         if (err.status !== 422) throw err;
+  #     #         github.rest.git.updateRef({
+  #     #           owner: context.repo.owner,
+  #     #           repo: context.repo.repo,
+  #     #           ref: 'tags/${{ env.NAME }}-${{ env.VERSION }}',
+  #     #           sha: context.sha
+  #     #         });
+  #     #       })
 
-      - name: Release
-        if: ${{ github.ref_name == 'main' }}
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ env.NAME }}-${{ env.VERSION }}
-          body: ${{ env.DESCRIPTION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          make_latest: true
-          tag_name: ${{ env.NAME }}-${{ env.VERSION }}
-          files: |
-            releases/*.tgz
+  #     - name: Release
+  #       if: ${{ github.ref_name == 'main' }}
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         name: ${{ env.NAME }}-${{ env.VERSION }}
+  #         body: ${{ env.DESCRIPTION }}
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         make_latest: true
+  #         tag_name: ${{ env.NAME }}-${{ env.VERSION }}
+  #         files: |
+  #           releases/*.tgz
 
-      - name: Package Helm Charts
-        if: ${{ github.ref_name == 'development' }}
-        run: |
-          helm package ${{ matrix.dir }} -d ./releases --version "dev"
+  #     - name: Package Helm Charts
+  #       if: ${{ github.ref_name == 'development' }}
+  #       run: |
 
-      # - name: Create tag
-      #   if: ${{ github.ref_name == 'development' }}
-      #   uses: actions/github-script@v5
-      #   with:
-      #     script: |
-      #       github.rest.git.createRef({
-      #         owner: context.repo.owner,
-      #         repo: context.repo.repo,
-      #         ref: 'refs/tags/${{ env.NAME }}-dev',
-      #         sha: context.sha
-      #       }).catch(err => {
-      #         if (err.status !== 422) throw err;
-      #         github.rest.git.updateRef({
-      #           owner: context.repo.owner,
-      #           repo: context.repo.repo,
-      #           ref: 'tags/${{ env.NAME }}-dev',
-      #           sha: context.sha
-      #         });
-      #       })
+          
 
-      - name: Release
-        if: ${{ github.ref_name == 'development' }}
-        uses: softprops/action-gh-release@v2
-        with:
-          name: ${{ env.NAME }}-dev
-          body: ${{ env.DESCRIPTION }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          prerelease: true
-          tag_name: ${{ env.NAME }}-dev
-          files: |
-            releases/*.tgz
+  #     # - name: Create tag
+  #     #   if: ${{ github.ref_name == 'development' }}
+  #     #   uses: actions/github-script@v5
+  #     #   with:
+  #     #     script: |
+  #     #       github.rest.git.createRef({
+  #     #         owner: context.repo.owner,
+  #     #         repo: context.repo.repo,
+  #     #         ref: 'refs/tags/${{ env.NAME }}-dev',
+  #     #         sha: context.sha
+  #     #       }).catch(err => {
+  #     #         if (err.status !== 422) throw err;
+  #     #         github.rest.git.updateRef({
+  #     #           owner: context.repo.owner,
+  #     #           repo: context.repo.repo,
+  #     #           ref: 'tags/${{ env.NAME }}-dev',
+  #     #           sha: context.sha
+  #     #         });
+  #     #       })
 
-      - name: Checkout Releases Branch
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: releases
-          clean: false
+  #     - name: Release
+  #       if: ${{ github.ref_name == 'development' }}
+  #       uses: softprops/action-gh-release@v2
+  #       with:
+  #         name: ${{ env.NAME }}-dev
+  #         body: ${{ env.DESCRIPTION }}
+  #         token: ${{ secrets.GITHUB_TOKEN }}
+  #         prerelease: true
+  #         tag_name: ${{ env.NAME }}-dev
+  #         files: |
+  #           releases/*.tgz
 
-      - name: Move Packaged Helm Charts
-        run: |
-          mkdir -p packages;
-          mv releases/*.tgz packages/;
+  #     - name: Checkout Releases Branch
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #         ref: releases
+  #         clean: false
 
-      - name: Commit and Push Packaged Helm Charts
-        run: |
-          git add packages;
-          git commit -m "Add ${{ env.NAME }}-${{ env.VERSION }}";
-          git push;
+  #     - name: Move Packaged Helm Charts
+  #       run: |
+  #         mkdir -p packages;
+  #         mv releases/*.tgz packages/;
 
-  rebuild-index:
-    permissions:
-      contents: write
-    runs-on: ubuntu-latest
-    needs:
-      - package-helm-charts
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          # ref: releases
+  #     - name: Commit and Push Packaged Helm Charts
+  #       run: |
+  #         git add packages;
+  #         git commit -m "Add ${{ env.NAME }}-${{ env.VERSION }}";
+  #         git push;
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+  # rebuild-index:
+  #   permissions:
+  #     contents: write
+  #   runs-on: ubuntu-latest
+  #   needs:
+  #     - package-helm-charts
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #       with:
+  #         fetch-depth: 0
+  #         # ref: releases
 
-      - name: Install Helm
-        uses: azure/setup-helm@v4
-        env:
-          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  #     - name: Configure Git
+  #       run: |
+  #         git config user.name "$GITHUB_ACTOR"
+  #         git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
-      - name: Install Chart Releaser
-        run: |
-          wget https://github.com/helm/chart-releaser/releases/download/v1.6.0/chart-releaser_1.6.0_linux_amd64.tar.gz;
-          tar xfz chart-releaser_1.6.0_linux_amd64.tar.gz cr;
-          sudo mv cr /usr/local/bin/;
+  #     - name: Install Helm
+  #       uses: azure/setup-helm@v4
+  #       env:
+  #         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
 
-      - name: Rebuild Index
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
-        run: |
-          cr index -r ${{ github.repository }} -o ${{ github.repository_owner }} --pages-branch releases --package-path packages --push
+  #     - name: Install Chart Releaser
+  #       run: |
+  #         wget https://github.com/helm/chart-releaser/releases/download/v1.6.0/chart-releaser_1.6.0_linux_amd64.tar.gz;
+  #         tar xfz chart-releaser_1.6.0_linux_amd64.tar.gz cr;
+  #         sudo mv cr /usr/local/bin/;
+
+  #     - name: Rebuild Index
+  #       env:
+  #         CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+  #       run: |
+  #         cr index -r ${{ github.repository }} -o ${{ github.repository_owner }} --pages-branch releases --package-path packages --push
