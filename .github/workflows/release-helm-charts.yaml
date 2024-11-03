@@ -17,7 +17,7 @@ jobs:
           fetch-depth: 0
 
       - name: Package and Publish Helm Charts
-        users: KriegerHomeServer/custom-helm-publish
+        uses: KriegerHomeServer/custom-helm-publish
         with:
           main_branch: main
           charts_dir: charts
