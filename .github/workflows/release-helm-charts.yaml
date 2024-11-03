@@ -25,6 +25,9 @@ jobs:
           pages_branch: releases
           packages_dir: packages
           branch_tag_rules: "main:^.*$,development:^.*-dev$"
+        env:
+          GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
 
   # package-helm-charts:
